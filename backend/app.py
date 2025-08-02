@@ -11,8 +11,8 @@ def create_app():
     """Create and configure the Flask application"""
     app = Flask(__name__)
     
-    # Enable CORS for all routes
-    CORS(app, resources={r"/api/*": {"origins": "http://localhost:3000"}})
+    # Enable CORS for all routes - allow requests from frontend
+    CORS(app, origins=["http://localhost:3000"], supports_credentials=True)
     
     # Register blueprints
     app.register_blueprint(api_bp, url_prefix='/api')
