@@ -1,0 +1,1 @@
+# Mahjong logic package 

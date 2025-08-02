@@ -1,0 +1,50 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Custom grid for 13 tiles */
+@layer utilities {
+  .grid-cols-13 {
+    grid-template-columns: repeat(13, minmax(0, 1fr));
+  }
+}
+
+/* Mahjong tile styles */
+@layer components {
+  .tile {
+    @apply rounded-lg text-white text-center shadow-md transition-all duration-200;
+  }
+  
+  .tile:hover {
+    @apply transform scale-105 shadow-lg;
+  }
+  
+  .tile-man {
+    @apply bg-red-500;
+  }
+  
+  .tile-pin {
+    @apply bg-blue-500;
+  }
+  
+  .tile-sou {
+    @apply bg-green-500;
+  }
+  
+  .tile-honor {
+    @apply bg-yellow-500;
+  }
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .grid-cols-13 {
+    grid-template-columns: repeat(7, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 480px) {
+  .grid-cols-13 {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
