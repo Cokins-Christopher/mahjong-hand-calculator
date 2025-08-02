@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import TileSelector from './components/TileSelector';
 import HandDisplay from './components/HandDisplay';
 import RecommendationPanel from './components/RecommendationPanel';
+import RelevantPatterns from './components/RelevantPatterns';
+import RulesDisplay from './components/RulesDisplay';
 import MahjongAPI from './services/api';
 
 function App() {
@@ -9,14 +11,26 @@ function App() {
   const [selectedYear, setSelectedYear] = useState(2024);
   const [handAnalysis, setHandAnalysis] = useState(null);
   const [recommendations, setRecommendations] = useState(null);
+  const [patterns, setPatterns] = useState([]);
+  const [tileInfo, setTileInfo] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
   const [apiStatus, setApiStatus] = useState('checking');
+  const [showRules, setShowRules] = useState(false);
 
-  // Check API health on component mount
+  // Check API health and load initial data on component mount
   useEffect(() => {
     checkApiHealth();
+    loadInitialData();
   }, []);
+
+  // Load patterns and tile info when year changes
+  useEffect(() => {
+    if (apiStatus === 'healthy') {
+      loadPatterns();
+      loadTileInfo();
+    }
+  }, [selectedYear, apiStatus]);
 
   const checkApiHealth = async () => {
     try {
@@ -25,6 +39,33 @@ function App() {
     } catch (err) {
       setApiStatus('unhealthy');
       console.error('API health check failed:', err);
+    }
+  };
+
+  const loadInitialData = async () => {
+    if (apiStatus === 'healthy') {
+      await Promise.all([
+        loadPatterns(),
+        loadTileInfo()
+      ]);
+    }
+  };
+
+  const loadPatterns = async () => {
+    try {
+      const patternsData = await MahjongAPI.getPatterns(selectedYear);
+      setPatterns(patternsData.patterns || []);
+    } catch (err) {
+      console.error('Failed to load patterns:', err);
+    }
+  };
+
+  const loadTileInfo = async () => {
+    try {
+      const tileInfoData = await MahjongAPI.getTileInfo();
+      setTileInfo(tileInfoData);
+    } catch (err) {
+      console.error('Failed to load tile info:', err);
     }
   };
 
@@ -97,16 +138,25 @@ function App() {
               </div>
             </div>
             
-            {/* API Status */}
-            <div className="flex items-center">
-              <div className={`w-3 h-3 rounded-full mr-2 ${
-                apiStatus === 'healthy' ? 'bg-green-500' : 
-                apiStatus === 'unhealthy' ? 'bg-red-500' : 'bg-yellow-500'
-              }`}></div>
-              <span className="text-sm text-gray-600">
-                {apiStatus === 'healthy' ? 'API Connected' : 
-                 apiStatus === 'unhealthy' ? 'API Disconnected' : 'Checking API...'}
-              </span>
+            {/* API Status and Rules Toggle */}
+            <div className="flex items-center space-x-4">
+              <div className="flex items-center">
+                <div className={`w-3 h-3 rounded-full mr-2 ${
+                  apiStatus === 'healthy' ? 'bg-green-500' : 
+                  apiStatus === 'unhealthy' ? 'bg-red-500' : 'bg-yellow-500'
+                }`}></div>
+                <span className="text-sm text-gray-600">
+                  {apiStatus === 'healthy' ? 'API Connected' : 
+                   apiStatus === 'unhealthy' ? 'API Disconnected' : 'Checking API...'}
+                </span>
+              </div>
+              
+              <button
+                onClick={() => setShowRules(!showRules)}
+                className="px-3 py-1 bg-blue-500 text-white rounded text-sm hover:bg-blue-600 transition-colors"
+              >
+                {showRules ? 'Hide Rules' : 'Show Rules'}
+              </button>
             </div>
           </div>
         </div>
@@ -137,6 +187,11 @@ function App() {
               </div>
             </div>
           </div>
+        )}
+
+        {/* Rules Display */}
+        {showRules && (
+          <RulesDisplay selectedYear={selectedYear} />
         )}
 
         {/* Tile Selector */}
@@ -172,6 +227,15 @@ function App() {
               )}
             </div>
           </div>
+        )}
+
+        {/* Relevant Patterns - Show when tiles are selected */}
+        {selectedTiles.length > 0 && patterns.length > 0 && (
+          <RelevantPatterns 
+            tiles={selectedTiles}
+            patterns={patterns}
+            selectedYear={selectedYear}
+          />
         )}
 
         {/* Hand Display */}
@@ -223,11 +287,19 @@ function App() {
                 </div>
                 <div className="flex items-start">
                   <span className="text-blue-500 mr-2">4.</span>
-                  <span>Click "Find Hand" to analyze your hand based on {selectedYear} rules</span>
+                  <span>View relevant patterns that match your tiles</span>
                 </div>
                 <div className="flex items-start">
                   <span className="text-blue-500 mr-2">5.</span>
+                  <span>Click "Find Hand" to analyze your hand based on {selectedYear} rules</span>
+                </div>
+                <div className="flex items-start">
+                  <span className="text-blue-500 mr-2">6.</span>
                   <span>Use the recommendations to improve your strategy</span>
+                </div>
+                <div className="flex items-start">
+                  <span className="text-blue-500 mr-2">7.</span>
+                  <span>Click "Show Rules" to view all available patterns</span>
                 </div>
               </div>
             </div>

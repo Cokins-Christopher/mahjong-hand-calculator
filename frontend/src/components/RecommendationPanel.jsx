@@ -4,18 +4,18 @@ const RecommendationPanel = ({ recommendations = null, isLoading = false, error 
   // Tile display names for American Mahjong
   const tileNames = {
     // Bams (Bamboo)
-    '1b': '1 Bam', '2b': '2 Bam', '3b': '3 Bam', '4b': '4 Bam', '5b': '5 Bam',
-    '6b': '6 Bam', '7b': '7 Bam', '8b': '8 Bam', '9b': '9 Bam',
+    '1B': '1 Bam', '2B': '2 Bam', '3B': '3 Bam', '4B': '4 Bam', '5B': '5 Bam',
+    '6B': '6 Bam', '7B': '7 Bam', '8B': '8 Bam', '9B': '9 Bam',
     // Cracks (Characters)
-    '1c': '1 Crack', '2c': '2 Crack', '3c': '3 Crack', '4c': '4 Crack', '5c': '5 Crack',
-    '6c': '6 Crack', '7c': '7 Crack', '8c': '8 Crack', '9c': '9 Crack',
+    '1C': '1 Crack', '2C': '2 Crack', '3C': '3 Crack', '4C': '4 Crack', '5C': '5 Crack',
+    '6C': '6 Crack', '7C': '7 Crack', '8C': '8 Crack', '9C': '9 Crack',
     // Dots (Circles)
-    '1d': '1 Dot', '2d': '2 Dot', '3d': '3 Dot', '4d': '4 Dot', '5d': '5 Dot',
-    '6d': '6 Dot', '7d': '7 Dot', '8d': '8 Dot', '9d': '9 Dot',
+    '1D': '1 Dot', '2D': '2 Dot', '3D': '3 Dot', '4D': '4 Dot', '5D': '5 Dot',
+    '6D': '6 Dot', '7D': '7 Dot', '8D': '8 Dot', '9D': '9 Dot',
     // Winds
     'E': 'East', 'S': 'South', 'W': 'West', 'N': 'North',
     // Dragons
-    'R': 'Red Dragon', 'G': 'Green Dragon', 'W': 'White Dragon',
+    'R': 'Red Dragon', 'G': 'Green Dragon', '0': 'White Dragon',
     // Flowers
     'F1': 'Flower 1', 'F2': 'Flower 2', 'F3': 'Flower 3', 'F4': 'Flower 4',
     'F5': 'Flower 5', 'F6': 'Flower 6', 'F7': 'Flower 7', 'F8': 'Flower 8',
@@ -39,17 +39,11 @@ const RecommendationPanel = ({ recommendations = null, isLoading = false, error 
   };
 
   const getSuitForTile = (tile) => {
-    if (tile.startsWith('1b') || tile.startsWith('2b') || tile.startsWith('3b') || 
-        tile.startsWith('4b') || tile.startsWith('5b') || tile.startsWith('6b') || 
-        tile.startsWith('7b') || tile.startsWith('8b') || tile.startsWith('9b')) return 'bams';
-    if (tile.startsWith('1c') || tile.startsWith('2c') || tile.startsWith('3c') || 
-        tile.startsWith('4c') || tile.startsWith('5c') || tile.startsWith('6c') || 
-        tile.startsWith('7c') || tile.startsWith('8c') || tile.startsWith('9c')) return 'cracks';
-    if (tile.startsWith('1d') || tile.startsWith('2d') || tile.startsWith('3d') || 
-        tile.startsWith('4d') || tile.startsWith('5d') || tile.startsWith('6d') || 
-        tile.startsWith('7d') || tile.startsWith('8d') || tile.startsWith('9d')) return 'dots';
+    if (tile.endsWith('B')) return 'bams';
+    if (tile.endsWith('C')) return 'cracks';
+    if (tile.endsWith('D')) return 'dots';
     if (['E', 'S', 'W', 'N'].includes(tile)) return 'winds';
-    if (['R', 'G', 'W'].includes(tile)) return 'dragons';
+    if (['R', 'G', '0'].includes(tile)) return 'dragons';
     if (tile.startsWith('F')) return 'flowers';
     if (tile.startsWith('J')) return 'jokers';
     if (tile.startsWith('B')) return 'blanks';
@@ -119,6 +113,21 @@ const RecommendationPanel = ({ recommendations = null, isLoading = false, error 
           </div>
         </div>
         
+        {/* Strategic Advice */}
+        {recommendations.strategic_advice && (
+          <div className="mb-6">
+            <h4 className="text-lg font-semibold text-gray-700 mb-3 flex items-center">
+              <span className="text-purple-500 mr-2">🎯</span>
+              Strategic Advice
+            </h4>
+            <div className="bg-purple-50 border border-purple-200 rounded-lg p-4">
+              <div className="text-purple-800">
+                {recommendations.strategic_advice}
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Best Discard */}
         {recommendations.best_discard && (
           <div className="mb-6">
@@ -197,30 +206,34 @@ const RecommendationPanel = ({ recommendations = null, isLoading = false, error 
         {/* Strategy Tips for American Mahjong */}
         <div>
           <h4 className="text-lg font-semibold text-gray-700 mb-3 flex items-center">
-            <span className="text-purple-500 mr-2">📚</span>
+            <span className="text-orange-500 mr-2">📚</span>
             American Mahjong Strategy Tips
           </h4>
-          <div className="bg-purple-50 border border-purple-200 rounded-lg p-4">
-            <div className="space-y-2 text-sm text-purple-800">
+          <div className="bg-orange-50 border border-orange-200 rounded-lg p-4">
+            <div className="space-y-2 text-sm text-orange-800">
               <div className="flex items-start">
-                <span className="text-purple-500 mr-2">•</span>
+                <span className="text-orange-500 mr-2">•</span>
                 <span>Focus on building hands that match the {selectedYear} card patterns</span>
               </div>
               <div className="flex items-start">
-                <span className="text-purple-500 mr-2">•</span>
+                <span className="text-orange-500 mr-2">•</span>
                 <span>Jokers are wild cards - use them strategically to complete hands</span>
               </div>
               <div className="flex items-start">
-                <span className="text-purple-500 mr-2">•</span>
+                <span className="text-orange-500 mr-2">•</span>
                 <span>Flowers and Dragons are often key to high-scoring hands</span>
               </div>
               <div className="flex items-start">
-                <span className="text-purple-500 mr-2">•</span>
+                <span className="text-orange-500 mr-2">•</span>
                 <span>Keep track of exposed tiles to avoid discarding needed pieces</span>
               </div>
               <div className="flex items-start">
-                <span className="text-purple-500 mr-2">•</span>
+                <span className="text-orange-500 mr-2">•</span>
                 <span>Consider the year-specific rules when planning your strategy</span>
+              </div>
+              <div className="flex items-start">
+                <span className="text-orange-500 mr-2">•</span>
+                <span>Higher point patterns (40-75 pts) are more valuable but harder to complete</span>
               </div>
             </div>
           </div>

@@ -16,7 +16,7 @@ def evaluate_hand():
     
     Expected JSON payload:
     {
-        "tiles": ["1b", "2b", "3b", "4c", "5c", "6c", "7d", "8d", "9d", "E", "S", "W", "N"],
+        "tiles": ["1B", "2B", "3B", "4C", "5C", "6C", "7D", "8D", "9D", "E", "S", "W", "N"],
         "year": 2024
     }
     """
@@ -30,8 +30,22 @@ def evaluate_hand():
         year = data.get('year', 2024)  # Default to 2024 if not specified
         
         # Validate input
-        if not isinstance(tiles, list) or len(tiles) != 13:
-            return jsonify({"error": "Must provide exactly 13 tiles"}), 400
+        if not isinstance(tiles, list):
+            return jsonify({"error": "Tiles must be a list"}), 400
+        
+        if len(tiles) != 13:
+            return jsonify({"error": f"Must provide exactly 13 tiles, got {len(tiles)}"}), 400
+        
+        # Validate tile format
+        invalid_tiles = []
+        for tile in tiles:
+            if not isinstance(tile, str):
+                invalid_tiles.append(f"Tile must be string, got {type(tile)}")
+            elif not _is_valid_tile_format(tile):
+                invalid_tiles.append(f"Invalid tile format: {tile}")
+        
+        if invalid_tiles:
+            return jsonify({"error": "Invalid tiles found", "details": invalid_tiles}), 400
         
         # Initialize evaluators
         evaluator = HandEvaluator()
@@ -45,12 +59,20 @@ def evaluate_hand():
         
         response = {
             "hand_analysis": hand_analysis,
-            "recommendations": recommendations
+            "recommendations": recommendations,
+            "validation": {
+                "tile_count": len(tiles),
+                "year": year,
+                "all_tiles_valid": True
+            }
         }
         
         logger.info(f"Hand evaluated successfully for year {year}: {tiles}")
         return jsonify(response)
         
+    except ValueError as e:
+        logger.error(f"Validation error: {str(e)}")
+        return jsonify({"error": str(e)}), 400
     except Exception as e:
         logger.error(f"Error evaluating hand: {str(e)}")
         return jsonify({"error": "Failed to evaluate hand"}), 500
@@ -85,24 +107,25 @@ def validate_tiles():
         
         tiles = data['tiles']
         
+        if not isinstance(tiles, list):
+            return jsonify({"error": "Tiles must be a list"}), 400
+        
         # Basic validation for American Mahjong tiles
         valid_tiles = [
-            # Bams (Bamboo) - 1b-9b
-            "1b", "2b", "3b", "4b", "5b", "6b", "7b", "8b", "9b",
-            # Cracks (Characters) - 1c-9c
-            "1c", "2c", "3c", "4c", "5c", "6c", "7c", "8c", "9c",
-            # Dots (Circles) - 1d-9d
-            "1d", "2d", "3d", "4d", "5d", "6d", "7d", "8d", "9d",
+            # Bams (Bamboo) - 1B-9B
+            "1B", "2B", "3B", "4B", "5B", "6B", "7B", "8B", "9B",
+            # Cracks (Characters) - 1C-9C
+            "1C", "2C", "3C", "4C", "5C", "6C", "7C", "8C", "9C",
+            # Dots (Circles) - 1D-9D
+            "1D", "2D", "3D", "4D", "5D", "6D", "7D", "8D", "9D",
             # Winds
             "E", "S", "W", "N",
             # Dragons
-            "R", "G", "W",
-            # Flowers
-            "F1", "F2", "F3", "F4", "F5", "F6", "F7", "F8",
-            # Jokers
-            "J1", "J2", "J3", "J4", "J5", "J6", "J7", "J8", "J9", "J10",
-            # Blanks
-            "B1", "B2", "B3", "B4", "B5", "B6"
+            "R", "G", "0",
+            # Flowers (Jokers)
+            "F",
+            # Year tiles
+            "2024"
         ]
         
         invalid_tiles = [tile for tile in tiles if tile not in valid_tiles]
@@ -116,9 +139,100 @@ def validate_tiles():
         
         return jsonify({
             "valid": True,
-            "message": "All tiles are valid American Mahjong tiles"
+            "message": "All tiles are valid American Mahjong tiles",
+            "tile_count": len(tiles)
         })
         
     except Exception as e:
         logger.error(f"Error validating tiles: {str(e)}")
-        return jsonify({"error": "Failed to validate tiles"}), 500 
+        return jsonify({"error": "Failed to validate tiles"}), 500
+
+@api_bp.route('/get-patterns', methods=['GET'])
+def get_patterns():
+    """
+    Get available patterns for a specific year
+    """
+    try:
+        year = request.args.get('year', 2024, type=int)
+        
+        evaluator = HandEvaluator()
+        year_rules = evaluator.year_rules.get(year, {})
+        patterns = year_rules.get('patterns', {})
+        
+        # Format patterns for API response
+        formatted_patterns = []
+        for pattern_id, pattern_info in patterns.items():
+            formatted_patterns.append({
+                "id": pattern_id,
+                "name": pattern_id.replace('_', ' ').title(),
+                "pattern": pattern_info['pattern'],
+                "description": pattern_info['description'],
+                "points": pattern_info['points'],
+                "category": pattern_info['category'],
+                "suit_requirement": pattern_info.get('suit_requirement', 'any'),
+                "joker_allowed": pattern_info.get('joker_allowed', True)
+            })
+        
+        return jsonify({
+            "year": year,
+            "patterns": formatted_patterns,
+            "total_patterns": len(formatted_patterns)
+        })
+        
+    except Exception as e:
+        logger.error(f"Error getting patterns: {str(e)}")
+        return jsonify({"error": "Failed to get patterns"}), 500
+
+@api_bp.route('/get-tile-info', methods=['GET'])
+def get_tile_info():
+    """
+    Get information about American Mahjong tiles
+    """
+    try:
+        evaluator = HandEvaluator()
+        
+        return jsonify({
+            "tile_categories": {
+                "bams": evaluator.valid_tiles['bams'],
+                "cracks": evaluator.valid_tiles['cracks'],
+                "dots": evaluator.valid_tiles['dots'],
+                "winds": evaluator.valid_tiles['winds'],
+                "dragons": evaluator.valid_tiles['dragons'],
+                "flowers": evaluator.valid_tiles['flowers'],
+                "year_tiles": evaluator.valid_tiles['year_tiles']
+            },
+            "dragon_associations": evaluator.dragon_associations,
+            "total_tiles": sum(len(tiles) for tiles in evaluator.valid_tiles.values())
+        })
+        
+    except Exception as e:
+        logger.error(f"Error getting tile info: {str(e)}")
+        return jsonify({"error": "Failed to get tile info"}), 500
+
+def _is_valid_tile_format(tile: str) -> bool:
+    """Check if a tile string has valid format"""
+    if not isinstance(tile, str):
+        return False
+    
+    # Check for numbered tiles (1B-9B, 1C-9C, 1D-9D)
+    if len(tile) == 2 and tile[0].isdigit() and tile[1] in ['B', 'C', 'D']:
+        number = int(tile[0])
+        return 1 <= number <= 9
+    
+    # Check for winds
+    if tile in ['E', 'S', 'W', 'N']:
+        return True
+    
+    # Check for dragons
+    if tile in ['R', 'G', '0']:
+        return True
+    
+    # Check for flowers
+    if tile == 'F':
+        return True
+    
+    # Check for year tiles
+    if tile == '2024':
+        return True
+    
+    return False 

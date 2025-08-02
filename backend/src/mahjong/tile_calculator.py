@@ -21,10 +21,10 @@ class TileCalculator:
             'winds': 4,
             # Dragons are very valuable
             'dragons': 6,
-            # Flowers are valuable
-            'flowers': 5,
-            # Jokers are wild cards - very valuable
-            'jokers': 8,
+            # Flowers are wild cards - very valuable
+            'flowers': 8,
+            # Year tiles are very valuable
+            'year_tiles': 10,
             # Blanks are least valuable
             'blanks': 1
         }
@@ -36,9 +36,16 @@ class TileCalculator:
             'dots': 1.0,   # Circles
             'winds': 1.2,  # Winds (slightly more valuable)
             'dragons': 1.5, # Dragons (very valuable)
-            'flowers': 1.3, # Flowers (valuable)
-            'jokers': 2.0,  # Jokers (wild cards)
+            'flowers': 2.0,  # Flowers (wild cards)
+            'year_tiles': 2.5, # Year tiles (very valuable)
             'blanks': 0.5   # Blanks (least valuable)
+        }
+        
+        # Dragon associations for matching
+        self.dragon_associations = {
+            'C': 'R',  # Cracks/Characters match Red Dragon
+            'B': 'G',  # Bams/Bamboo match Green Dragon
+            'D': '0'   # Dots/Circles match White Dragon
         }
     
     def get_recommendations(self, tiles: List[str], hand_analysis: Dict, year: int = 2024) -> Dict:
@@ -63,10 +70,14 @@ class TileCalculator:
             # Generate reasoning
             reasoning = self._generate_reasoning(tiles, best_discard, best_draws, hand_analysis, year)
             
+            # Generate strategic advice
+            strategic_advice = self._generate_strategic_advice(tiles, hand_analysis, year)
+            
             return {
                 "best_discard": best_discard,
                 "best_draws": best_draws,
-                "reasoning": reasoning
+                "reasoning": reasoning,
+                "strategic_advice": strategic_advice
             }
             
         except Exception as e:
@@ -74,7 +85,8 @@ class TileCalculator:
             return {
                 "best_discard": None,
                 "best_draws": [],
-                "reasoning": "Unable to generate recommendations"
+                "reasoning": "Unable to generate recommendations",
+                "strategic_advice": "Unable to generate strategic advice"
             }
     
     def _find_best_discard(self, tiles: List[str], hand_analysis: Dict, year: int) -> str:
@@ -99,18 +111,18 @@ class TileCalculator:
         score = 0.0
         
         # Base tile value
-        if tile.startswith('J'):
-            score += self.tile_values['jokers']
-        elif tile in ['R', 'G', 'W']:
+        if tile == 'F':
+            score += self.tile_values['flowers']
+        elif tile == '2024':
+            score += self.tile_values['year_tiles']
+        elif tile in ['R', 'G', '0']:
             score += self.tile_values['dragons']
         elif tile in ['E', 'S', 'W', 'N']:
             score += self.tile_values['winds']
-        elif tile.startswith('F'):
-            score += self.tile_values['flowers']
-        elif tile.startswith('B'):
-            score += self.tile_values['blanks']
-        else:
+        elif tile.endswith(('B', 'C', 'D')):
             score += self.tile_values['numbered']
+        else:
+            score += self.tile_values['blanks']
         
         # Consider tile frequency
         tile_counts = Counter(all_tiles)
@@ -131,11 +143,15 @@ class TileCalculator:
         year_value = self._calculate_year_specific_value(tile, all_tiles, year)
         score += year_value
         
+        # Consider hand structure
+        structure_value = self._calculate_structure_value(tile, all_tiles, hand_analysis)
+        score += structure_value
+        
         return score
     
     def _calculate_sequence_potential(self, tile: str, all_tiles: List[str]) -> float:
         """Calculate how valuable a tile is for forming sequences"""
-        if not tile.endswith(('b', 'c', 'd')):
+        if not tile.endswith(('B', 'C', 'D')):
             return 0  # Only numbered tiles can form sequences
         
         number = int(tile[0])
@@ -171,24 +187,57 @@ class TileCalculator:
     
     def _calculate_year_specific_value(self, tile: str, all_tiles: List[str], year: int) -> float:
         """Calculate value based on year-specific patterns"""
-        # This is a simplified implementation
-        # In practice, this would check against the actual year card patterns
-        
         score = 0.0
         
-        # Example year-specific logic
+        # Example year-specific logic for 2024
         if year == 2024:
-            # 2024 might favor certain patterns
-            if tile in ['R', 'G', 'W']:  # Dragons
+            # 2024 patterns favor certain tiles
+            if tile == '2024':
+                score += 5  # Year tile is very valuable
+            if tile in ['R', 'G', '0']:  # Dragons
                 score += 2
-            if tile.startswith('F'):  # Flowers
+            if tile == 'F':  # Flowers
+                score += 3
+            if tile.endswith(('B', 'C', 'D')):  # Numbered tiles
+                number = int(tile[0])
+                if number in [2, 4, 6, 8]:  # Even numbers for 2468 patterns
+                    score += 1
+                if number in [1, 3, 5, 7, 9]:  # Odd numbers for 13579 patterns
+                    score += 1
+                if number in [3, 6, 9]:  # 369 patterns
+                    score += 1
+        
+        return score
+    
+    def _calculate_structure_value(self, tile: str, all_tiles: List[str], hand_analysis: Dict) -> float:
+        """Calculate value based on current hand structure"""
+        score = 0.0
+        
+        # Get hand structure info
+        hand_structure = hand_analysis.get('hand_structure', {})
+        num_suits = hand_structure.get('num_suits', 0)
+        suits_used = hand_structure.get('suits_used', [])
+        
+        # If we have a single suit, favor keeping tiles in that suit
+        if num_suits == 1 and tile.endswith(('B', 'C', 'D')):
+            suit = tile[-1]
+            if suit in suits_used:
+                score += 2  # Keep tiles in the same suit
+        
+        # If we have multiple suits, consider which to focus on
+        if num_suits > 1 and tile.endswith(('B', 'C', 'D')):
+            suit = tile[-1]
+            # Check if this suit has more tiles
+            suit_count = sum(1 for t in all_tiles if t.endswith(suit))
+            if suit_count >= 4:  # If this suit has many tiles, keep it
                 score += 1
-        elif year == 2023:
-            # 2023 might favor different patterns
-            if tile.startswith('J'):  # Jokers
-                score += 2
-            if tile in ['E', 'S', 'W', 'N']:  # Winds
-                score += 1
+        
+        # Consider dragon associations
+        if tile.endswith(('B', 'C', 'D')):
+            suit = tile[-1]
+            matching_dragon = self.dragon_associations.get(suit)
+            if matching_dragon in all_tiles:
+                score += 1  # Keep tiles that match existing dragons
         
         return score
     
@@ -226,7 +275,7 @@ class TileCalculator:
         
         # Find tiles that could form sequences
         for tile in tiles:
-            if tile.endswith(('b', 'c', 'd')):
+            if tile.endswith(('B', 'C', 'D')):
                 number = int(tile[0])
                 suit = tile[-1]
                 
@@ -237,10 +286,33 @@ class TileCalculator:
                     helpful_tiles.append(f"{number+1}{suit}")
         
         # Add special tiles that are often valuable
-        special_tiles = ['R', 'G', 'W', 'F1', 'F2', 'F3', 'F4', 'F5', 'F6', 'F7', 'F8']
+        special_tiles = ['R', 'G', '0', 'F', '2024']
         for tile in special_tiles:
             if tile not in tiles:
                 helpful_tiles.append(tile)
+        
+        # Add tiles that could help with year-specific patterns
+        if year == 2024:
+            # Add tiles for 2468 patterns
+            for number in [2, 4, 6, 8]:
+                for suit in ['B', 'C', 'D']:
+                    tile = f"{number}{suit}"
+                    if tile not in tiles:
+                        helpful_tiles.append(tile)
+            
+            # Add tiles for 13579 patterns
+            for number in [1, 3, 5, 7, 9]:
+                for suit in ['B', 'C', 'D']:
+                    tile = f"{number}{suit}"
+                    if tile not in tiles:
+                        helpful_tiles.append(tile)
+            
+            # Add tiles for 369 patterns
+            for number in [3, 6, 9]:
+                for suit in ['B', 'C', 'D']:
+                    tile = f"{number}{suit}"
+                    if tile not in tiles:
+                        helpful_tiles.append(tile)
         
         return list(set(helpful_tiles))
     
@@ -249,18 +321,18 @@ class TileCalculator:
         score = 0.0
         
         # Base value
-        if tile.startswith('J'):
-            score += 8  # Jokers are very valuable
-        elif tile in ['R', 'G', 'W']:
+        if tile == 'F':
+            score += 8  # Flowers are very valuable
+        elif tile == '2024':
+            score += 10  # Year tiles are very valuable
+        elif tile in ['R', 'G', '0']:
             score += 6  # Dragons are very valuable
         elif tile in ['E', 'S', 'W', 'N']:
             score += 4  # Winds are valuable
-        elif tile.startswith('F'):
-            score += 5  # Flowers are valuable
-        elif tile.startswith('B'):
-            score += 1  # Blanks are least valuable
-        else:
+        elif tile.endswith(('B', 'C', 'D')):
             score += 2  # Numbered tiles
+        else:
+            score += 1  # Other tiles
         
         # Check if it would form a pair
         tile_counts = Counter(current_tiles)
@@ -270,6 +342,8 @@ class TileCalculator:
                 score += 3  # Would form a pair
             elif count == 2:
                 score += 6  # Would form a triplet
+            elif count == 3:
+                score += 10  # Would form a quad
         
         # Check if it would help form sequences
         sequence_help = self._calculate_sequence_help(tile, current_tiles)
@@ -279,11 +353,15 @@ class TileCalculator:
         year_bonus = self._calculate_year_specific_value(tile, current_tiles, year)
         score += year_bonus
         
+        # Hand structure bonus
+        structure_bonus = self._calculate_structure_value(tile, current_tiles, hand_analysis)
+        score += structure_bonus
+        
         return score
     
     def _calculate_sequence_help(self, tile: str, current_tiles: List[str]) -> float:
         """Calculate how much a tile would help form sequences"""
-        if not tile.endswith(('b', 'c', 'd')):
+        if not tile.endswith(('B', 'C', 'D')):
             return 0
         
         number = int(tile[0])
@@ -312,11 +390,11 @@ class TileCalculator:
         
         if best_discard:
             # Explain why this tile should be discarded
-            if best_discard.startswith('B'):
-                reasoning_parts.append(f"Discard {best_discard} - Blank tiles have the lowest value")
-            elif best_discard.startswith('J'):
-                reasoning_parts.append(f"Discard {best_discard} - While jokers are valuable, this one doesn't fit your current strategy")
-            elif best_discard in ['R', 'G', 'W']:
+            if best_discard == 'F':
+                reasoning_parts.append(f"Discard {best_discard} - While flowers are valuable, this one doesn't fit your current strategy")
+            elif best_discard == '2024':
+                reasoning_parts.append(f"Discard {best_discard} - Year tiles are valuable but this one doesn't fit your hand structure")
+            elif best_discard in ['R', 'G', '0']:
                 reasoning_parts.append(f"Discard {best_discard} - Dragon tiles are valuable but this one doesn't fit your hand structure")
             elif best_discard in ['E', 'S', 'W', 'N']:
                 reasoning_parts.append(f"Discard {best_discard} - Wind tiles are valuable but this one doesn't fit your current pattern")
@@ -334,7 +412,7 @@ class TileCalculator:
             reasoning_parts.append("Your hand is excellent - focus on completing high-value patterns")
         elif hand_value >= 35:
             reasoning_parts.append("Your hand is strong - focus on completing your best patterns")
-        elif hand_value >= 20:
+        elif hand_value >= 25:
             reasoning_parts.append("Your hand is developing - focus on building sequences and pairs")
         else:
             reasoning_parts.append("Your hand needs work - focus on building basic structure")
@@ -342,4 +420,57 @@ class TileCalculator:
         # Add year-specific advice
         reasoning_parts.append(f"Remember that {year} rules may favor certain patterns - check the official card for specific hands")
         
-        return " ".join(reasoning_parts) 
+        return " ".join(reasoning_parts)
+    
+    def _generate_strategic_advice(self, tiles: List[str], hand_analysis: Dict, year: int) -> str:
+        """Generate strategic advice based on hand analysis"""
+        advice_parts = []
+        
+        # Get hand structure
+        hand_structure = hand_analysis.get('hand_structure', {})
+        num_suits = hand_structure.get('num_suits', 0)
+        flower_count = hand_structure.get('flower_tiles', 0)
+        dragon_count = hand_structure.get('dragon_tiles', 0)
+        year_count = hand_structure.get('year_tiles', 0)
+        
+        # Suit strategy
+        if num_suits == 1:
+            advice_parts.append("Focus on single-suit patterns - you have a good foundation")
+        elif num_suits == 2:
+            advice_parts.append("Consider two-suit patterns or expand to three suits")
+        elif num_suits == 3:
+            advice_parts.append("You have good suit diversity - consider three-suit patterns")
+        else:
+            advice_parts.append("Build toward a specific suit strategy")
+        
+        # Special tile strategy
+        if flower_count >= 4:
+            advice_parts.append("You have many flowers - focus on patterns that use them effectively")
+        elif flower_count >= 2:
+            advice_parts.append("You have some flowers - use them strategically")
+        else:
+            advice_parts.append("Consider drawing flowers for flexibility")
+        
+        if dragon_count >= 2:
+            advice_parts.append("You have dragons - consider dragon-heavy patterns")
+        
+        if year_count >= 1:
+            advice_parts.append("You have year tiles - focus on 2024-specific patterns")
+        
+        # Pattern-specific advice for 2024
+        if year == 2024:
+            numbered_tiles = [tile for tile in tiles if tile.endswith(('B', 'C', 'D'))]
+            numbers = [int(tile[0]) for tile in numbered_tiles]
+            
+            even_count = sum(1 for n in numbers if n % 2 == 0)
+            odd_count = sum(1 for n in numbers if n % 2 == 1)
+            
+            if even_count >= 6:
+                advice_parts.append("You have many even numbers - consider 2468 patterns")
+            if odd_count >= 6:
+                advice_parts.append("You have many odd numbers - consider 13579 patterns")
+            
+            if any(n in [3, 6, 9] for n in numbers):
+                advice_parts.append("You have 3, 6, or 9 tiles - consider 369 patterns")
+        
+        return " ".join(advice_parts) 

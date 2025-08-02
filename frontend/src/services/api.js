@@ -43,6 +43,35 @@ class MahjongAPI {
   }
 
   /**
+   * Get all patterns for a specific year
+   * @param {number} year - American Mahjong rules year
+   * @returns {Promise<Object>} Patterns data
+   */
+  static async getPatterns(year = 2024) {
+    try {
+      const response = await api.get(`/get-patterns?year=${year}`);
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching patterns:', error);
+      throw new Error(error.response?.data?.error || 'Failed to fetch patterns');
+    }
+  }
+
+  /**
+   * Get tile information and dragon associations
+   * @returns {Promise<Object>} Tile information
+   */
+  static async getTileInfo() {
+    try {
+      const response = await api.get('/get-tile-info');
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching tile info:', error);
+      throw new Error(error.response?.data?.error || 'Failed to fetch tile information');
+    }
+  }
+
+  /**
    * Health check
    * @returns {Promise<Object>} API status
    */

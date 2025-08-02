@@ -5,13 +5,13 @@ const TileSelector = ({ onTilesChange, selectedTiles = [], onYearChange, selecte
   const [showSelector, setShowSelector] = useState(false);
   const [year, setYear] = useState(selectedYear);
 
-  // American Mahjong tile sets
+  // American Mahjong tile sets - using uppercase notation to match backend
   const allTiles = {
-    bams: ['1b', '2b', '3b', '4b', '5b', '6b', '7b', '8b', '9b'],
-    cracks: ['1c', '2c', '3c', '4c', '5c', '6c', '7c', '8c', '9c'],
-    dots: ['1d', '2d', '3d', '4d', '5d', '6d', '7d', '8d', '9d'],
+    bams: ['1B', '2B', '3B', '4B', '5B', '6B', '7B', '8B', '9B'],
+    cracks: ['1C', '2C', '3C', '4C', '5C', '6C', '7C', '8C', '9C'],
+    dots: ['1D', '2D', '3D', '4D', '5D', '6D', '7D', '8D', '9D'],
     winds: ['E', 'S', 'W', 'N'],
-    dragons: ['R', 'G', 'W'], // Red, Green, White
+    dragons: ['R', 'G', '0'], // Red, Green, White (using '0' for White Dragon)
     flowers: ['F1', 'F2', 'F3', 'F4', 'F5', 'F6', 'F7', 'F8'],
     jokers: ['J1', 'J2', 'J3', 'J4', 'J5', 'J6', 'J7', 'J8', 'J9', 'J10'],
     blanks: ['B1', 'B2', 'B3', 'B4', 'B5', 'B6']
@@ -20,18 +20,18 @@ const TileSelector = ({ onTilesChange, selectedTiles = [], onYearChange, selecte
   // Tile display names for American Mahjong
   const tileNames = {
     // Bams (Bamboo)
-    '1b': '1 Bam', '2b': '2 Bam', '3b': '3 Bam', '4b': '4 Bam', '5b': '5 Bam',
-    '6b': '6 Bam', '7b': '7 Bam', '8b': '8 Bam', '9b': '9 Bam',
+    '1B': '1 Bam', '2B': '2 Bam', '3B': '3 Bam', '4B': '4 Bam', '5B': '5 Bam',
+    '6B': '6 Bam', '7B': '7 Bam', '8B': '8 Bam', '9B': '9 Bam',
     // Cracks (Characters)
-    '1c': '1 Crack', '2c': '2 Crack', '3c': '3 Crack', '4c': '4 Crack', '5c': '5 Crack',
-    '6c': '6 Crack', '7c': '7 Crack', '8c': '8 Crack', '9c': '9 Crack',
+    '1C': '1 Crack', '2C': '2 Crack', '3C': '3 Crack', '4C': '4 Crack', '5C': '5 Crack',
+    '6C': '6 Crack', '7C': '7 Crack', '8C': '8 Crack', '9C': '9 Crack',
     // Dots (Circles)
-    '1d': '1 Dot', '2d': '2 Dot', '3d': '3 Dot', '4d': '4 Dot', '5d': '5 Dot',
-    '6d': '6 Dot', '7d': '7 Dot', '8d': '8 Dot', '9d': '9 Dot',
+    '1D': '1 Dot', '2D': '2 Dot', '3D': '3 Dot', '4D': '4 Dot', '5D': '5 Dot',
+    '6D': '6 Dot', '7D': '7 Dot', '8D': '8 Dot', '9D': '9 Dot',
     // Winds
     'E': 'East', 'S': 'South', 'W': 'West', 'N': 'North',
     // Dragons
-    'R': 'Red Dragon', 'G': 'Green Dragon', 'W': 'White Dragon',
+    'R': 'Red Dragon', 'G': 'Green Dragon', '0': 'White Dragon',
     // Flowers
     'F1': 'Flower 1', 'F2': 'Flower 2', 'F3': 'Flower 3', 'F4': 'Flower 4',
     'F5': 'Flower 5', 'F6': 'Flower 6', 'F7': 'Flower 7', 'F8': 'Flower 8',
@@ -81,17 +81,11 @@ const TileSelector = ({ onTilesChange, selectedTiles = [], onYearChange, selecte
   };
 
   const getSuitForTile = (tile) => {
-    if (tile.startsWith('1b') || tile.startsWith('2b') || tile.startsWith('3b') || 
-        tile.startsWith('4b') || tile.startsWith('5b') || tile.startsWith('6b') || 
-        tile.startsWith('7b') || tile.startsWith('8b') || tile.startsWith('9b')) return 'bams';
-    if (tile.startsWith('1c') || tile.startsWith('2c') || tile.startsWith('3c') || 
-        tile.startsWith('4c') || tile.startsWith('5c') || tile.startsWith('6c') || 
-        tile.startsWith('7c') || tile.startsWith('8c') || tile.startsWith('9c')) return 'cracks';
-    if (tile.startsWith('1d') || tile.startsWith('2d') || tile.startsWith('3d') || 
-        tile.startsWith('4d') || tile.startsWith('5d') || tile.startsWith('6d') || 
-        tile.startsWith('7d') || tile.startsWith('8d') || tile.startsWith('9d')) return 'dots';
+    if (tile.endsWith('B')) return 'bams';
+    if (tile.endsWith('C')) return 'cracks';
+    if (tile.endsWith('D')) return 'dots';
     if (['E', 'S', 'W', 'N'].includes(tile)) return 'winds';
-    if (['R', 'G', 'W'].includes(tile)) return 'dragons';
+    if (['R', 'G', '0'].includes(tile)) return 'dragons';
     if (tile.startsWith('F')) return 'flowers';
     if (tile.startsWith('J')) return 'jokers';
     if (tile.startsWith('B')) return 'blanks';
@@ -224,7 +218,7 @@ const TileSelector = ({ onTilesChange, selectedTiles = [], onYearChange, selecte
         <div className="flex flex-wrap gap-2">
           <button
             onClick={() => {
-              const sampleHand = ['1b', '2b', '3b', '1c', '2c', '3c', '1d', '2d', '3d', 'E', 'S', 'W', 'N'];
+              const sampleHand = ['1B', '2B', '3B', '1C', '2C', '3C', '1D', '2D', '3D', 'E', 'S', 'W', 'N'];
               setTiles(sampleHand);
             }}
             className="px-3 py-1 bg-green-500 text-white rounded text-sm hover:bg-green-600 transition-colors"
@@ -233,7 +227,7 @@ const TileSelector = ({ onTilesChange, selectedTiles = [], onYearChange, selecte
           </button>
           <button
             onClick={() => {
-              const dragonHand = ['R', 'G', 'W', '1b', '2b', '3b', '4b', '5b', '6b', '7b', '8b', '9b', 'E'];
+              const dragonHand = ['R', 'G', '0', '1B', '2B', '3B', '4B', '5B', '6B', '7B', '8B', '9B', 'E'];
               setTiles(dragonHand);
             }}
             className="px-3 py-1 bg-purple-500 text-white rounded text-sm hover:bg-purple-600 transition-colors"
