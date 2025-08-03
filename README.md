@@ -1,11 +1,11 @@
-# Mahjong Hand Calculator
+# American Mahjong Hand Calculator
 
-A comprehensive Mahjong hand analysis tool that helps players evaluate their hands and get strategic recommendations. Built with React.js frontend and Python Flask backend, following Japanese/Riichi Mahjong rules.
+A comprehensive American Mahjong hand analysis tool that helps players evaluate their hands and get strategic recommendations. Built with React.js frontend and Python Flask backend, following American Mahjong Association rules for 2024.
 
 ## 🎯 Features
 
 - **Manual Tile Input**: Intuitive tile selector with drag & drop interface
-- **Hand Evaluation**: Calculate shanten (distance to winning) and identify potential yaku
+- **Hand Evaluation**: Calculate hand value and identify potential patterns
 - **AI Recommendations**: Get strategic advice on best discards and draws
 - **Real-time Analysis**: Automatic hand analysis when 13 tiles are selected
 - **Responsive Design**: Mobile-friendly interface
@@ -99,17 +99,21 @@ The frontend will start on `http://localhost:3000`
 
 ### Tile Notation
 
-The app uses standard Mahjong tile notation:
+The app uses American Mahjong tile notation:
 
-- **Man tiles**: `1m`, `2m`, `3m`, ..., `9m` (萬)
-- **Pin tiles**: `1p`, `2p`, `3p`, ..., `9p` (筒)
-- **Sou tiles**: `1s`, `2s`, `3s`, ..., `9s` (索)
-- **Honor tiles**: `1z`, `2z`, `3z`, `4z`, `5z`, `6z`, `7z` (東南西北白發中)
+- **Bams (Bamboo)**: `1B`, `2B`, `3B`, ..., `9B`
+- **Cracks (Characters)**: `1C`, `2C`, `3C`, ..., `9C`
+- **Dots (Circles)**: `1D`, `2D`, `3D`, ..., `9D`
+- **Winds**: `E` (East), `S` (South), `W` (West), `N` (North)
+- **Dragons**: `R` (Red), `G` (Green), `0` (White)
+- **Flowers**: `F`
+- **Jokers**: `J`
+- **Year Tiles**: `2024`
 
 ### Hand Analysis Features
 
-- **Shanten Calculation**: Distance to winning hand (0 = tenpai)
-- **Yaku Detection**: Identify potential winning patterns
+- **Pattern Recognition**: Identify potential winning patterns
+- **Hand Value Calculation**: Calculate points based on patterns
 - **Tile Distribution**: Visual breakdown by suit
 - **Strategic Recommendations**: Best discards and draws
 
@@ -162,44 +166,48 @@ mahjong-hand-calculator/
 
 ### Hand Evaluation
 - **POST** `/api/evaluate-hand`
-  - Body: `{"tiles": ["1m", "2m", "3m", ...]}`
+  - Body: `{"tiles": ["1B", "2B", "3B", ...]}`
   - Returns: Hand analysis and recommendations
 
 ### Tile Validation
 - **POST** `/api/validate-tiles`
-  - Body: `{"tiles": ["1m", "2m", "3m", ...]}`
+  - Body: `{"tiles": ["1B", "2B", "3B", ...]}`
   - Returns: Validation result
 
 ### Health Check
 - **GET** `/`
   - Returns: API status
 
-## 🎯 Mahjong Rules
+## 🎯 American Mahjong Rules
 
-This calculator follows **Japanese/Riichi Mahjong** rules:
+This calculator follows **American Mahjong Association** rules for 2024:
 
 - **13-tile hands** (plus 1 draw for 14-tile complete hands)
-- **Shanten calculation** (distance to winning)
-- **Yaku identification** (winning patterns)
-- **Standard tile notation** (1m-9m, 1p-9p, 1s-9s, 1z-7z)
+- **Pattern recognition** (60+ official patterns)
+- **Point calculation** based on pattern complexity
+- **American tile notation** (1B-9B, 1C-9C, 1D-9D, Winds, Dragons, Flowers, Jokers)
 
-### Supported Yaku
-- **Tanyao** (All Simples)
-- **Yakuhai** (Value Honor)
-- **Pinfu** (All Sequences)
-- **Iipeikou** (Identical Sequences)
-- **Honitsu** (Half Flush)
-- **Chinitsu** (Full Flush)
+### Supported Pattern Categories
+- **2024 Patterns** - Year-specific patterns
+- **2468 Patterns** - Even number combinations
+- **Any Like Numbers** - Same numbers across suits
+- **Addition Hands** - Mathematical combinations
+- **Quint Patterns** - Five-of-a-kind combinations
+- **Consecutive Run** - Sequential number patterns
+- **13579 Patterns** - Odd number combinations
+- **Winds & Dragons** - Honor tile patterns
+- **369 Patterns** - Specific number combinations
+- **Singles and Pairs** - Mixed tile patterns
 - And more...
 
 ## 🚧 Future Features
 
 - [ ] **Image Recognition**: Upload photos of tiles for automatic detection
-- [ ] **Advanced Yaku**: More complex winning pattern detection
+- [ ] **Advanced Pattern Detection**: More complex winning pattern recognition
 - [ ] **Game State Tracking**: Track discards and draws throughout the game
 - [ ] **Multiplayer Support**: Real-time game analysis
 - [ ] **Statistics**: Track hand performance over time
-- [ ] **Tutorial Mode**: Learn Mahjong rules and strategies
+- [ ] **Tutorial Mode**: Learn American Mahjong rules and strategies
 
 ## 🤝 Contributing
 
@@ -215,6 +223,7 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 
 ## 🙏 Acknowledgments
 
+- **American Mahjong Association** - For the official 2024 rules
 - **Mahjong Community** - For feedback and testing
 - **React Team** - For the amazing frontend framework
 - **Flask Team** - For the lightweight Python web framework

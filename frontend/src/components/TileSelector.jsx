@@ -12,8 +12,8 @@ const TileSelector = ({ onTilesChange, selectedTiles = [], onYearChange, selecte
     dots: ['1D', '2D', '3D', '4D', '5D', '6D', '7D', '8D', '9D'],
     winds: ['E', 'S', 'W', 'N'],
     dragons: ['R', 'G', '0'], // Red, Green, White (using '0' for White Dragon)
-    flowers: ['F1', 'F2', 'F3', 'F4', 'F5', 'F6', 'F7', 'F8'],
-    jokers: ['J1', 'J2', 'J3', 'J4', 'J5', 'J6', 'J7', 'J8', 'J9', 'J10'],
+    flowers: ['F'], // Single flower tile
+    jokers: ['J'], // Single joker tile
     blanks: ['B1', 'B2', 'B3', 'B4', 'B5', 'B6']
   };
 
@@ -33,11 +33,9 @@ const TileSelector = ({ onTilesChange, selectedTiles = [], onYearChange, selecte
     // Dragons
     'R': 'Red Dragon', 'G': 'Green Dragon', '0': 'White Dragon',
     // Flowers
-    'F1': 'Flower 1', 'F2': 'Flower 2', 'F3': 'Flower 3', 'F4': 'Flower 4',
-    'F5': 'Flower 5', 'F6': 'Flower 6', 'F7': 'Flower 7', 'F8': 'Flower 8',
+    'F': 'Flower',
     // Jokers
-    'J1': 'Joker 1', 'J2': 'Joker 2', 'J3': 'Joker 3', 'J4': 'Joker 4', 'J5': 'Joker 5',
-    'J6': 'Joker 6', 'J7': 'Joker 7', 'J8': 'Joker 8', 'J9': 'Joker 9', 'J10': 'Joker 10',
+    'J': 'Joker',
     // Blanks
     'B1': 'Blank 1', 'B2': 'Blank 2', 'B3': 'Blank 3', 'B4': 'Blank 4', 'B5': 'Blank 5', 'B6': 'Blank 6'
   };
@@ -86,8 +84,8 @@ const TileSelector = ({ onTilesChange, selectedTiles = [], onYearChange, selecte
     if (tile.endsWith('D')) return 'dots';
     if (['E', 'S', 'W', 'N'].includes(tile)) return 'winds';
     if (['R', 'G', '0'].includes(tile)) return 'dragons';
-    if (tile.startsWith('F')) return 'flowers';
-    if (tile.startsWith('J')) return 'jokers';
+    if (tile === 'F') return 'flowers';
+    if (tile === 'J') return 'jokers';
     if (tile.startsWith('B')) return 'blanks';
     return 'blanks';
   };
@@ -236,7 +234,7 @@ const TileSelector = ({ onTilesChange, selectedTiles = [], onYearChange, selecte
           </button>
           <button
             onClick={() => {
-              const flowerHand = ['F1', 'F2', 'F3', 'F4', 'F5', 'F6', 'F7', 'F8', 'J1', 'J2', 'J3', 'J4', 'J5'];
+              const flowerHand = ['F', 'F', 'F', 'F', 'F', 'F', 'F', 'F', 'J', 'J', 'J', 'J', 'J'];
               setTiles(flowerHand);
             }}
             className="px-3 py-1 bg-pink-500 text-white rounded text-sm hover:bg-pink-600 transition-colors"

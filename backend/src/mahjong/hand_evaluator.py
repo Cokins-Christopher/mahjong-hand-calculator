@@ -22,7 +22,9 @@ class HandEvaluator:
             'dots': [f"{i}D" for i in range(1, 10)],  # 1D-9D (Circles)
             'winds': ['E', 'S', 'W', 'N'],  # East, South, West, North
             'dragons': ['R', 'G', '0'],  # Red, Green, White Dragons
-            'flowers': ['F'],  # Flowers (Jokers)
+            'flowers': ['F'],  # Flowers
+            'jokers': ['J'],  # Jokers
+            'blanks': [f"B{i}" for i in range(1, 7)],  # B1-B6 (Blanks)
             'year_tiles': ['2024']  # Year-specific tiles
         }
         
@@ -33,478 +35,9 @@ class HandEvaluator:
             'D': '0'   # Dots/Circles match White Dragon
         }
         
-        # 2024 American Mahjong Rules
-        self.year_rules = {
-            2024: {
-                'patterns': {
-                    # 2024 Patterns (25 points each unless noted)
-                    '2024_222_000_2222_4444': {
-                        'pattern': '222 000 2222 4444',
-                        'description': 'Any 2 Suits',
-                        'points': 25,
-                        'category': 'X',
-                        'suit_requirement': 'any_2_suits',
-                        'joker_allowed': True
-                    },
-                    '2024_FFFF_2222_0000_24': {
-                        'pattern': 'FFFF 2222 0000 24',
-                        'description': 'Any 2 Suits',
-                        'points': 25,
-                        'category': 'X',
-                        'suit_requirement': 'any_2_suits',
-                        'joker_allowed': True
-                    },
-                    '2024_FF_2024_2222_2222': {
-                        'pattern': 'FF 2024 2222 2222',
-                        'description': 'Any 3 Suits, Like Kongs 2s or 4s',
-                        'points': 25,
-                        'category': 'X',
-                        'suit_requirement': 'any_3_suits',
-                        'joker_allowed': True,
-                        'like_kongs': True
-                    },
-                    '2024_NN_EEE_2024_WWW_SS': {
-                        'pattern': 'NN EEE 2024 WWW SS',
-                        'description': '2024 Any 1 Suit',
-                        'points': 30,
-                        'category': 'C',
-                        'suit_requirement': 'any_1_suit',
-                        'joker_allowed': False
-                    },
-                    
-                    # 2468 Patterns
-                    '2468_222_444_6666_8888': {
-                        'pattern': '222 444 6666 8888',
-                        'description': 'Any 1 or 2 Suits',
-                        'points': 25,
-                        'category': 'X',
-                        'suit_requirement': 'any_1_or_2_suits',
-                        'joker_allowed': True
-                    },
-                    '2468_2_444_44_666_8888': {
-                        'pattern': '2 444 44 666 8888',
-                        'description': 'Any 3 Suits',
-                        'points': 25,
-                        'category': 'X',
-                        'suit_requirement': 'any_3_suits',
-                        'joker_allowed': True
-                    },
-                    '2468_22_44_666_888_DDDD': {
-                        'pattern': '22 44 666 888 DDDD',
-                        'description': 'Any 1 Suit w Matching Dragons',
-                        'points': 25,
-                        'category': 'X',
-                        'suit_requirement': 'any_1_suit_matching_dragons',
-                        'joker_allowed': True
-                    },
-                    '2468_FFFF_4444_666_6666': {
-                        'pattern': 'FFFF 4444 666 6666',
-                        'description': 'Any 3 Suits',
-                        'points': 25,
-                        'category': 'X',
-                        'suit_requirement': 'any_3_suits',
-                        'joker_allowed': True
-                    },
-                    '2468_FF_2222_44_66_8888': {
-                        'pattern': 'FF 2222 44 66 8888',
-                        'description': 'Any 1 or 2 Suits',
-                        'points': 25,
-                        'category': 'X',
-                        'suit_requirement': 'any_1_or_2_suits',
-                        'joker_allowed': True
-                    },
-                    '2468_FF_222_44_666_88_88': {
-                        'pattern': 'FF 222 44 666 88 88',
-                        'description': 'Any 3 Suits',
-                        'points': 35,
-                        'category': 'C',
-                        'suit_requirement': 'any_3_suits',
-                        'joker_allowed': True
-                    },
-                    
-                    # Any Like Numbers
-                    'like_FFFF_111_1111_111': {
-                        'pattern': 'FFFF 111 1111 111',
-                        'description': 'Any 3 Suits',
-                        'points': 25,
-                        'category': 'X',
-                        'suit_requirement': 'any_3_suits',
-                        'joker_allowed': True
-                    },
-                    'like_11_DDD_11_DDD_1111': {
-                        'pattern': '11 DDD 11 DDD 1111',
-                        'description': 'Any 2 Suits, Pairs and Dragons Match',
-                        'points': 25,
-                        'category': 'X',
-                        'suit_requirement': 'any_2_suits_matching_dragons',
-                        'joker_allowed': True
-                    },
-                    'like_FF_1111_NEWS_1111': {
-                        'pattern': 'FF 1111 NEWS 1111',
-                        'description': 'Any 2 Suits',
-                        'points': 25,
-                        'category': 'X',
-                        'suit_requirement': 'any_2_suits',
-                        'joker_allowed': True
-                    },
-                    
-                    # Addition Hands (Lucky Sevens)
-                    'addition_FF_1111_6666_7777': {
-                        'pattern': 'FF 1111 + 6666 = 7777',
-                        'description': 'Any 1 Suit',
-                        'points': 25,
-                        'category': 'X',
-                        'suit_requirement': 'any_1_suit',
-                        'joker_allowed': True
-                    },
-                    'addition_FF_2222_5555_7777': {
-                        'pattern': 'FF 2222 + 5555 = 7777',
-                        'description': 'Any 1 Suit',
-                        'points': 25,
-                        'category': 'X',
-                        'suit_requirement': 'any_1_suit',
-                        'joker_allowed': True
-                    },
-                    'addition_FF_3333_4444_7777': {
-                        'pattern': 'FF 3333 + 4444 = 7777',
-                        'description': 'Any 1 Suit',
-                        'points': 25,
-                        'category': 'X',
-                        'suit_requirement': 'any_1_suit',
-                        'joker_allowed': True
-                    },
-                    
-                    # Quints (40-45 points)
-                    'quint_FF_11111_22_33333': {
-                        'pattern': 'FF 11111 22 33333',
-                        'description': 'Any 1 Suit, Any 3 Consec. Nos.',
-                        'points': 40,
-                        'category': 'X',
-                        'suit_requirement': 'any_1_suit',
-                        'joker_allowed': True
-                    },
-                    'quint_11111_NNNN_88888': {
-                        'pattern': '11111 NNNN 88888',
-                        'description': 'Any 2 Suits, Quints Any 2 Non-Matching Nos., Any Wind',
-                        'points': 40,
-                        'category': 'X',
-                        'suit_requirement': 'any_2_suits',
-                        'joker_allowed': False
-                    },
-                    'quint_11_22222_11_22222': {
-                        'pattern': '11 22222 11 22222',
-                        'description': 'Any 2 Suits, Any 2 Consec. Nos.',
-                        'points': 45,
-                        'category': 'X',
-                        'suit_requirement': 'any_2_suits',
-                        'joker_allowed': False
-                    },
-                    'quint_FFFFF_DDDD_11111': {
-                        'pattern': 'FFFFF DDDD 11111',
-                        'description': 'Any 2 Suits, Quint Any No.',
-                        'points': 40,
-                        'category': 'X',
-                        'suit_requirement': 'any_2_suits',
-                        'joker_allowed': True
-                    },
-                    
-                    # Consecutive Run
-                    'consec_111_22_3333_44_555': {
-                        'pattern': '111 22 3333 44 555',
-                        'description': 'These Nos. Only',
-                        'points': 25,
-                        'category': 'X',
-                        'suit_requirement': 'specific_numbers',
-                        'joker_allowed': True,
-                        'specific_numbers': [1, 2, 3, 4, 5]
-                    },
-                    'consec_11_222_DDDD_333_44': {
-                        'pattern': '11 222 DDDD 333 44',
-                        'description': 'Any 4 Consec. Nos. in Any 1 Suit, Kong Opp. Dragons',
-                        'points': 25,
-                        'category': 'X',
-                        'suit_requirement': 'any_1_suit_opposite_dragons',
-                        'joker_allowed': True
-                    },
-                    'consec_FF_1111_2222_3333': {
-                        'pattern': 'FF 1111 2222 3333',
-                        'description': 'Any 1 or 3 Suits, Any 3 Consec. Nos',
-                        'points': 25,
-                        'category': 'X',
-                        'suit_requirement': 'any_1_or_3_suits',
-                        'joker_allowed': True
-                    },
-                    'consec_1_22_3333_1_22_3333': {
-                        'pattern': '1 22 3333 1 22 3333',
-                        'description': 'Any 2 Suits, Any 3 Consec. Nos.',
-                        'points': 30,
-                        'category': 'X',
-                        'suit_requirement': 'any_2_suits',
-                        'joker_allowed': True
-                    },
-                    'consec_11_22_333_444_DDDD': {
-                        'pattern': '11 22 333 444 DDDD',
-                        'description': 'Any 1 Suit, Any 4 Consec. Nos. w Matching Dragons',
-                        'points': 25,
-                        'category': 'X',
-                        'suit_requirement': 'any_1_suit_matching_dragons',
-                        'joker_allowed': True
-                    },
-                    'consec_FFFFF_123_444_444': {
-                        'pattern': 'FFFFF 123 444 444',
-                        'description': 'Any 3 Suits, Any 4 Consec. Nos.',
-                        'points': 30,
-                        'category': 'X',
-                        'suit_requirement': 'any_3_suits',
-                        'joker_allowed': True
-                    },
-                    'consec_111_222_3333_4444': {
-                        'pattern': '111 222 3333 4444',
-                        'description': 'Any 1 or 2 Suits, Any 4 Consec. Nos.',
-                        'points': 30,
-                        'category': 'C',
-                        'suit_requirement': 'any_1_or_2_suits',
-                        'joker_allowed': True
-                    },
-                    'consec_111_222_111_222_33': {
-                        'pattern': '111 222 111 222 33',
-                        'description': 'Any 3 Suits, Any 3 Consec. Nos.',
-                        'points': 30,
-                        'category': 'C',
-                        'suit_requirement': 'any_3_suits',
-                        'joker_allowed': True
-                    },
-                    
-                    # 13579 Patterns
-                    '13579_111_33_5555_77_999': {
-                        'pattern': '111 33 5555 77 999',
-                        'description': 'Any 1 or 3 Suits',
-                        'points': 25,
-                        'category': 'X',
-                        'suit_requirement': 'any_1_or_3_suits',
-                        'joker_allowed': True
-                    },
-                    '13579_111_333_3333_5555': {
-                        'pattern': '111 333 3333 5555',
-                        'description': 'Any 2 or 3 Suits',
-                        'points': 25,
-                        'category': 'X',
-                        'suit_requirement': 'any_2_or_3_suits',
-                        'joker_allowed': True
-                    },
-                    '13579_FF_11_333_5555_DDD': {
-                        'pattern': 'FF 11 333 5555 DDD',
-                        'description': 'Any 1 Suit w Matching Dragons',
-                        'points': 25,
-                        'category': 'X',
-                        'suit_requirement': 'any_1_suit_matching_dragons',
-                        'joker_allowed': True
-                    },
-                    '13579_11_33_55_7777_9999': {
-                        'pattern': '11 33 55 7777 9999',
-                        'description': 'Any 3 Suits',
-                        'points': 30,
-                        'category': 'X',
-                        'suit_requirement': 'any_3_suits',
-                        'joker_allowed': True
-                    },
-                    '13579_FFFF_3333_5555': {
-                        'pattern': 'FFFF 3333 x 5555 = 15',
-                        'description': 'Any 3 Suits',
-                        'points': 25,
-                        'category': 'X',
-                        'suit_requirement': 'any_3_suits',
-                        'joker_allowed': True
-                    },
-                    '13579_11_33_333_555_DDDD': {
-                        'pattern': '11 33 333 555 DDDD',
-                        'description': 'Any 3 Suits',
-                        'points': 25,
-                        'category': 'X',
-                        'suit_requirement': 'any_3_suits',
-                        'joker_allowed': True
-                    },
-                    '13579_111_33_555_333_333': {
-                        'pattern': '111 33 555 333 333',
-                        'description': 'Any 3 Suits, These Nos. Only',
-                        'points': 35,
-                        'category': 'C',
-                        'suit_requirement': 'any_3_suits',
-                        'joker_allowed': True,
-                        'specific_numbers': [1, 3, 5]
-                    },
-                    
-                    # Winds - Dragons (25-30 points)
-                    'winds_NNNN_EEE_WWW_SSSS': {
-                        'pattern': 'NNNN EEE WWW SSSS',
-                        'description': 'Any 2 Suits',
-                        'points': 25,
-                        'category': 'X',
-                        'suit_requirement': 'any_2_suits',
-                        'joker_allowed': True
-                    },
-                    'winds_FFFF_DDD_DDDD_DDD': {
-                        'pattern': 'FFFF DDD DDDD DDD',
-                        'description': 'Any 3 Dragons',
-                        'points': 25,
-                        'category': 'X',
-                        'suit_requirement': 'any_3_dragons',
-                        'joker_allowed': True
-                    },
-                    'winds_NNN_SSS_1111_2222': {
-                        'pattern': 'NNN SSS 1111 2222',
-                        'description': 'Any 2 Suits, Any 2 Consec. Nos.',
-                        'points': 25,
-                        'category': 'X',
-                        'suit_requirement': 'any_2_suits',
-                        'joker_allowed': True
-                    },
-                    'winds_FF_NN_EEE_WWW_SSSS': {
-                        'pattern': 'FF NN EEE WWW SSSS',
-                        'description': 'Any 2 Suits',
-                        'points': 25,
-                        'category': 'X',
-                        'suit_requirement': 'any_2_suits',
-                        'joker_allowed': True
-                    },
-                    'winds_NNNN_11_22_33_SSSS': {
-                        'pattern': 'NNNN 11 22 33 SSSS',
-                        'description': 'Any 1 Suit, Any 3 Consec. Nos.',
-                        'points': 30,
-                        'category': 'X',
-                        'suit_requirement': 'any_1_suit',
-                        'joker_allowed': True
-                    },
-                    'winds_FF_DDDD_NEWS_DDDD': {
-                        'pattern': 'FF DDDD NEWS DDDD',
-                        'description': 'Any 2 Dragons',
-                        'points': 25,
-                        'category': 'X',
-                        'suit_requirement': 'any_2_dragons',
-                        'joker_allowed': True
-                    },
-                    'winds_NNN_EW_SSS_111_111': {
-                        'pattern': 'NNN EW SSS 111 111',
-                        'description': 'Any 2 Suits, Any Like Nos.',
-                        'points': 30,
-                        'category': 'C',
-                        'suit_requirement': 'any_2_suits',
-                        'joker_allowed': True
-                    },
-                    
-                    # 369 Patterns
-                    '369_333_666_6666_9999': {
-                        'pattern': '333 666 6666 9999',
-                        'description': 'Any 2 or 3 Suits',
-                        'points': 25,
-                        'category': 'X',
-                        'suit_requirement': 'any_2_or_3_suits',
-                        'joker_allowed': True
-                    },
-                    '369_FF_3_66_999_333_333': {
-                        'pattern': 'FF 3 66 999 333 333',
-                        'description': 'Any 3 Suits, Like Pungs 3, 6 or 9',
-                        'points': 25,
-                        'category': 'X',
-                        'suit_requirement': 'any_3_suits',
-                        'joker_allowed': True,
-                        'like_pungs': True
-                    },
-                    '369_FF_333_666_9999': {
-                        'pattern': 'FF 333 666 9999',
-                        'description': 'Any 1 or 3 Suits',
-                        'points': 25,
-                        'category': 'X',
-                        'suit_requirement': 'any_1_or_3_suits',
-                        'joker_allowed': True
-                    },
-                    '369_333_DDDD_333_DDDD': {
-                        'pattern': '333 DDDD 333 DDDD',
-                        'description': 'Any 2 Suits, Pungs 3, 6 or 9 w Matching Dragons',
-                        'points': 25,
-                        'category': 'X',
-                        'suit_requirement': 'any_2_suits_matching_dragons',
-                        'joker_allowed': True
-                    },
-                    '369_3333_66_66_66_9999': {
-                        'pattern': '3333 66 66 66 9999',
-                        'description': 'Any 3 Suits, 3s and 9s Match',
-                        'points': 30,
-                        'category': 'X',
-                        'suit_requirement': 'any_3_suits',
-                        'joker_allowed': True,
-                        'matching_numbers': [3, 9]
-                    },
-                    '369_FFFF_33_66_999_DDD': {
-                        'pattern': 'FFFF 33 66 999 DDD',
-                        'description': 'Nos. Any 1 Suit, Any Opp. Dragon',
-                        'points': 25,
-                        'category': 'X',
-                        'suit_requirement': 'any_1_suit_opposite_dragons',
-                        'joker_allowed': True
-                    },
-                    '369_333_666_333_666_99': {
-                        'pattern': '333 666 333 666 99',
-                        'description': 'Any 3 Suits',
-                        'points': 30,
-                        'category': 'C',
-                        'suit_requirement': 'any_3_suits',
-                        'joker_allowed': True
-                    },
-                    
-                    # Singles and Pairs (50-75 points)
-                    'singles_FF_22_46_88_22_46_88': {
-                        'pattern': 'FF 22 46 88 22 46 88',
-                        'description': 'Any 2 Suits',
-                        'points': 50,
-                        'category': 'C',
-                        'suit_requirement': 'any_2_suits',
-                        'joker_allowed': False  # No jokers in Singles and Pairs
-                    },
-                    'singles_FF_11_33_55_55_77_99': {
-                        'pattern': 'FF 11 33 55 55 77 99',
-                        'description': 'Any 2 Suits',
-                        'points': 50,
-                        'category': 'C',
-                        'suit_requirement': 'any_2_suits',
-                        'joker_allowed': False
-                    },
-                    'singles_11_21123_112233': {
-                        'pattern': '11 21123 112233',
-                        'description': 'Any 3 Suits, These Nos. Only',
-                        'points': 50,
-                        'category': 'C',
-                        'suit_requirement': 'any_3_suits',
-                        'joker_allowed': False,
-                        'specific_numbers': [1, 2, 3]
-                    },
-                    'singles_FF_33_66_99_369_369': {
-                        'pattern': 'FF 33 66 99 369 369',
-                        'description': 'Any 3 Suits',
-                        'points': 50,
-                        'category': 'C',
-                        'suit_requirement': 'any_3_suits',
-                        'joker_allowed': False
-                    },
-                    'singles_11_22_33_44_55_DD_DD': {
-                        'pattern': '11 22 33 44 55 DD DD',
-                        'description': 'Any 5 Consec. Nos. w Opp. Dragons',
-                        'points': 50,
-                        'category': 'C',
-                        'suit_requirement': 'any_5_consec_opposite_dragons',
-                        'joker_allowed': False
-                    },
-                    'singles_2024_NN_EW_SS_2024': {
-                        'pattern': '2024 NN EW SS 2024',
-                        'description': 'Any 2 Suits',
-                        'points': 75,
-                        'category': 'C',
-                        'suit_requirement': 'any_2_suits',
-                        'joker_allowed': False
-                    }
-                }
-            }
-        }
+        # Import rules from rules specification
+        from .rules_specification import mahjong_rules
+        self.rules = mahjong_rules
     
     def evaluate_hand(self, tiles: List[str], year: int = 2024) -> Dict:
         """
@@ -571,39 +104,40 @@ class HandEvaluator:
         """Find potential hands based on year-specific rules"""
         potential_hands = []
         
-        # Get year patterns
-        year_patterns = self.year_rules.get(year, {}).get('patterns', {})
+        # Get year patterns from rules
+        year_patterns = self.rules.get_all_patterns(year)
         
         # Check each pattern
         for pattern_id, pattern_info in year_patterns.items():
-            if self._check_pattern_match(tiles, pattern_info):
+            if self._check_pattern_match(tiles, pattern_info, year):
                 potential_hands.append({
-                    "name": pattern_id.replace('_', ' ').title(),
+                    "name": pattern_info['name'],
                     "points": pattern_info['points'],
                     "description": pattern_info['description'],
                     "category": pattern_info['category'],
                     "pattern": pattern_info['pattern'],
-                    "pattern_id": pattern_id
+                    "pattern_id": pattern_id,
+                    "special_rules": pattern_info.get('special_rules', [])
                 })
         
         return potential_hands
     
-    def _check_pattern_match(self, tiles: List[str], pattern_info: Dict) -> bool:
+    def _check_pattern_match(self, tiles: List[str], pattern_info: Dict, year: int) -> bool:
         """Check if tiles match a specific pattern"""
         pattern = pattern_info['pattern']
         suit_requirement = pattern_info.get('suit_requirement', 'any')
         joker_allowed = pattern_info.get('joker_allowed', True)
         
         # Check joker usage
-        joker_count = tiles.count('F')
+        joker_count = tiles.count('J')
         if not joker_allowed and joker_count > 0:
             return False
         
         # Parse pattern into components
-        pattern_components = self._parse_pattern(pattern)
+        pattern_components = self._parse_pattern(pattern, year)
         
         # Check if tiles can satisfy the pattern
-        if not self._can_satisfy_pattern(tiles, pattern_components, pattern_info):
+        if not self._can_satisfy_pattern(tiles, pattern_components, pattern_info, year):
             return False
         
         # Check suit requirements
@@ -612,7 +146,7 @@ class HandEvaluator:
         
         return True
     
-    def _parse_pattern(self, pattern: str) -> List[Dict]:
+    def _parse_pattern(self, pattern: str, year: int) -> List[Dict]:
         """Parse pattern string into structured components"""
         components = []
         
@@ -629,11 +163,19 @@ class HandEvaluator:
             elif part == 'FFFFF':
                 components.append({'type': 'flower', 'count': 5})
             elif part == '2024':
-                components.append({'type': 'year', 'value': '2024'})
+                # Special handling for 2024 year tile
+                if year == 2024:
+                    components.append({'type': 'year', 'value': '2024', 'special': 'white_dragon_0'})
+                else:
+                    components.append({'type': 'year', 'value': '2024'})
             elif part in ['E', 'S', 'W', 'N']:
                 components.append({'type': 'wind', 'value': part})
             elif part in ['R', 'G', '0']:
-                components.append({'type': 'dragon', 'value': part})
+                # Special handling for White Dragon in 2024
+                if part == '0' and year == 2024:
+                    components.append({'type': 'dragon', 'value': part, 'special': 'white_dragon'})
+                else:
+                    components.append({'type': 'dragon', 'value': part})
             elif part == 'DDDD':
                 components.append({'type': 'dragon_kong', 'count': 4})
             elif part == 'DDD':
@@ -644,8 +186,10 @@ class HandEvaluator:
                 components.append({'type': 'dragon_single', 'count': 1})
             elif part == 'NEWS':
                 components.append({'type': 'all_winds', 'count': 4})
-            elif part == '24':
-                components.append({'type': 'specific_numbers', 'numbers': [2, 4]})
+            elif part in ['24', '48', '15', '35']:
+                # Handle specific number combinations
+                numbers = [int(digit) for digit in part]
+                components.append({'type': 'specific_numbers', 'numbers': numbers})
             else:
                 # Handle numbered patterns like "222", "1111", etc.
                 if part.isdigit():
@@ -659,28 +203,41 @@ class HandEvaluator:
         
         return components
     
-    def _can_satisfy_pattern(self, tiles: List[str], pattern_components: List[Dict], pattern_info: Dict) -> bool:
+    def _can_satisfy_pattern(self, tiles: List[str], pattern_components: List[Dict], pattern_info: Dict, year: int) -> bool:
         """Check if tiles can satisfy the pattern components"""
         tile_counts = Counter(tiles)
         
-        # Remove flowers from consideration for pattern matching
+        # Remove flowers and jokers from consideration for pattern matching
         flower_count = tile_counts.get('F', 0)
-        available_tiles = {k: v for k, v in tile_counts.items() if k != 'F'}
+        joker_count = tile_counts.get('J', 0)
+        available_tiles = {k: v for k, v in tile_counts.items() if k not in ['F', 'J']}
         
         # Check each component
         for component in pattern_components:
             if component['type'] == 'flower':
                 if flower_count < component['count']:
                     return False
+            elif component['type'] == 'joker':
+                if joker_count < component['count']:
+                    return False
             elif component['type'] == 'year':
                 if available_tiles.get('2024', 0) < 1:
                     return False
+                # Special handling for 2024 year tile
+                if component.get('special') == 'white_dragon_0' and year == 2024:
+                    # In 2024, the 0 in 2024 must be White Dragon
+                    if available_tiles.get('0', 0) < 1:
+                        return False
             elif component['type'] == 'wind':
                 if available_tiles.get(component['value'], 0) < 1:
                     return False
             elif component['type'] == 'dragon':
                 if available_tiles.get(component['value'], 0) < 1:
                     return False
+                # Special handling for White Dragon in 2024
+                if component.get('special') == 'white_dragon' and year == 2024:
+                    if component['value'] != '0':
+                        return False
             elif component['type'] == 'dragon_kong':
                 dragon_count = sum(available_tiles.get(d, 0) for d in ['R', 'G', '0'])
                 if dragon_count < component['count']:
@@ -709,7 +266,7 @@ class HandEvaluator:
                         number = int(tile[0])
                         if number in component['numbers']:
                             number_count += count
-                if number_count < 2:  # Need at least 2 of the specific numbers
+                if number_count < len(component['numbers']):  # Need at least one of each number
                     return False
             elif component['type'] == 'numbered_pattern':
                 # Check for numbered patterns (like "222", "1111")
@@ -829,7 +386,7 @@ class HandEvaluator:
             helpful_tiles.append(single)  # Another of the same tile
         
         # Add special tiles that are often needed
-        special_tiles = ['R', 'G', '0', 'F', '2024']
+        special_tiles = ['R', 'G', '0', 'F', 'J', '2024']
         for tile in special_tiles:
             if tile not in tiles:
                 helpful_tiles.append(tile)
@@ -871,6 +428,7 @@ class HandEvaluator:
         wind_tiles = [tile for tile in tiles if tile in ['E', 'S', 'W', 'N']]
         dragon_tiles = [tile for tile in tiles if tile in ['R', 'G', '0']]
         flower_tiles = [tile for tile in tiles if tile == 'F']
+        joker_tiles = [tile for tile in tiles if tile == 'J']
         year_tiles = [tile for tile in tiles if tile == '2024']
         
         # Analyze suits
@@ -889,6 +447,7 @@ class HandEvaluator:
             "wind_tiles": len(wind_tiles),
             "dragon_tiles": len(dragon_tiles),
             "flower_tiles": len(flower_tiles),
+            "joker_tiles": len(joker_tiles),
             "year_tiles": len(year_tiles),
             "suits_used": list(suits_used),
             "num_suits": len(suits_used),

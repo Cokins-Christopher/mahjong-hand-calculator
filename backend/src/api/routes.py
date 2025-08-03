@@ -122,8 +122,12 @@ def validate_tiles():
             "E", "S", "W", "N",
             # Dragons
             "R", "G", "0",
-            # Flowers (Jokers)
+            # Flowers
             "F",
+            # Jokers
+            "J",
+            # Blanks - B1-B6
+            "B1", "B2", "B3", "B4", "B5", "B6",
             # Year tiles
             "2024"
         ]
@@ -156,21 +160,22 @@ def get_patterns():
         year = request.args.get('year', 2024, type=int)
         
         evaluator = HandEvaluator()
-        year_rules = evaluator.year_rules.get(year, {})
-        patterns = year_rules.get('patterns', {})
+        patterns = evaluator.rules.get_all_patterns(year)
         
         # Format patterns for API response
         formatted_patterns = []
         for pattern_id, pattern_info in patterns.items():
             formatted_patterns.append({
                 "id": pattern_id,
-                "name": pattern_id.replace('_', ' ').title(),
+                "name": pattern_info['name'],
                 "pattern": pattern_info['pattern'],
                 "description": pattern_info['description'],
                 "points": pattern_info['points'],
                 "category": pattern_info['category'],
                 "suit_requirement": pattern_info.get('suit_requirement', 'any'),
-                "joker_allowed": pattern_info.get('joker_allowed', True)
+                "joker_allowed": pattern_info.get('joker_allowed', True),
+                "special_rules": pattern_info.get('special_rules', []),
+                "total_tiles": pattern_info.get('total_tiles', 0)
             })
         
         return jsonify({
@@ -199,10 +204,13 @@ def get_tile_info():
                 "winds": evaluator.valid_tiles['winds'],
                 "dragons": evaluator.valid_tiles['dragons'],
                 "flowers": evaluator.valid_tiles['flowers'],
+                "jokers": evaluator.valid_tiles['jokers'],
                 "year_tiles": evaluator.valid_tiles['year_tiles']
             },
             "dragon_associations": evaluator.dragon_associations,
-            "total_tiles": sum(len(tiles) for tiles in evaluator.valid_tiles.values())
+            "total_tiles": sum(len(tiles) for tiles in evaluator.valid_tiles.values()),
+            "year": 2024,
+            "rules_version": "2024 American Mahjong"
         })
         
     except Exception as e:
@@ -230,6 +238,15 @@ def _is_valid_tile_format(tile: str) -> bool:
     # Check for flowers
     if tile == 'F':
         return True
+    
+    # Check for jokers
+    if tile == 'J':
+        return True
+    
+    # Check for blanks (B1-B6)
+    if tile.startswith('B') and len(tile) == 2 and tile[1].isdigit():
+        number = int(tile[1])
+        return 1 <= number <= 6
     
     # Check for year tiles
     if tile == '2024':
